@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart City - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+</head>
+<body>
+    <!-- Loader initial -->
+    <div id="page-loader" class="page-loader">
+        <div class="loader-content">
+            <div class="spinner"></div>
+            <p>Chargement de Smart City...</p>
+        </div>
+    </div>
+
+    <header>
+        <div class="header-content">
+            <div class="header-left">
+                <h1>🏙️ Smart City</h1>
+                <p>Plateforme de gestion intelligente de la ville</p>
+            </div>
+            <div class="header-right">
+                <div class="connection-status" id="connection-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Connexion...</span>
+                </div>
+                <div class="current-time" id="current-time"></div>
+            </div>
+        </div>
+    </header>
+
+    <nav>
+        <div class="nav-container">
+            <button class="nav-btn active" data-service="dashboard">
+                <span class="nav-icon">🏙️</span>
+                <span class="nav-label">Dashboard Ville</span>
+            </button>
+            <button class="nav-btn" data-service="trip-planner">
+                <span class="nav-icon">🗺️</span>
+                <span class="nav-label">Planificateur</span>
+            </button>
+            <button class="nav-btn" data-service="transport">
+                <span class="nav-icon">🚌</span>
+                <span class="nav-label">Transport</span>
+            </button>
+            <button class="nav-btn" data-service="tourism">
+                <span class="nav-icon">🏛️</span>
+                <span class="nav-label">Tourisme</span>
+            </button>
+            <button class="nav-btn" data-service="air-quality">
+                <span class="nav-icon">🌫️</span>
+                <span class="nav-label">Qualité Air</span>
+            </button>
+            <button class="nav-btn" data-service="emergency">
+                <span class="nav-icon">🚑</span>
+                <span class="nav-label">Urgences</span>
+            </button>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Dashboard Ville (Page d'accueil) -->
+        <section id="dashboard" class="service-section active">
+            <div class="section-header">
+                <h2>📈 Dashboard Ville en Temps Réel</h2>
+                <p class="description">Vue d'ensemble de tous les services de la Smart City</p>
+            </div>
+            
+            <div class="city-stats-grid">
+                <div class="stat-card transport-stat clickable" onclick="showServiceDetails('transport')" title="Cliquez pour voir les détails">
+                    <div class="stat-icon">🚌</div>
+                    <div class="stat-content">
+                        <h3>Transport</h3>
+                        <p class="stat-value" id="dash-transport-value">-</p>
+                        <p class="stat-label" id="dash-transport-label">lignes opérationnelles</p>
+                    </div>
+                </div>
+                <div class="stat-card air-stat clickable" onclick="showServiceDetails('air-quality')" title="Cliquez pour voir les détails">
+                    <div class="stat-icon">🌫️</div>
+                    <div class="stat-content">
+                        <h3>Qualité Air</h3>
+                        <p class="stat-value" id="dash-air-value">-</p>
+                        <p class="stat-label" id="dash-air-label">AQI moyen</p>
+                    </div>
+                </div>
+                <div class="stat-card tourism-stat clickable" onclick="showServiceDetails('tourism')" title="Cliquez pour voir les détails">
+                    <div class="stat-icon">🏛️</div>
+                    <div class="stat-content">
+                        <h3>Tourisme</h3>
+                        <p class="stat-value" id="dash-tourism-value">-</p>
+                        <p class="stat-label" id="dash-tourism-label">attractions ouvertes</p>
+                    </div>
+                </div>
+                <div class="stat-card emergency-stat clickable" onclick="showServiceDetails('emergency')" title="Cliquez pour voir les détails">
+                    <div class="stat-icon">🚑</div>
+                    <div class="stat-content">
+                        <h3>Urgences</h3>
+                        <p class="stat-value" id="dash-emergency-value">-</p>
+                        <p class="stat-label" id="dash-emergency-label">véhicules disponibles</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="city-status-card" id="city-status-card">
+                <h3>État de la ville</h3>
+                <p class="city-status-text" id="city-status-text">Chargement...</p>
+            </div>
+            
+            <div class="alerts-section" id="alerts-section" style="display:none;">
+                <h3>⚠️ Alertes Actives</h3>
+                <div id="alerts-list"></div>
+            </div>
+            
+            <button onclick="loadCityDashboard()" class="btn-gradient">
+                <span class="btn-icon">🔄</span>
+                <span>Actualiser les données</span>
+            </button>
+        </section>
+
+        <!-- Planificateur de Trajet (Orchestration) -->
+        <section id="trip-planner" class="service-section">
+            <div class="section-header">
+                <h2>🗺️ Planificateur de Trajet Intelligent</h2>
+                <p class="description">Planifiez votre trajet en tenant compte de la qualité de l'air et des transports disponibles</p>
+            </div>
+            
+            <div class="planner-form-modern">
+                <div class="form-group">
+                    <label for="zone-select">
+                        <span class="label-icon">📍</span>
+                        <span>Zone de destination</span>
+                    </label>
+                    <div class="select-wrapper">
+                        <select id="zone-select">
+                            <option value="">Sélectionnez une zone...</option>
+                            <option value="Centre-Ville">🏛️ Centre-Ville</option>
+                            <option value="Zone Nord">🏢 Zone Nord</option>
+                            <option value="Zone Sud">🌳 Zone Sud</option>
+                            <option value="Gare">🚉 Gare</option>
+                            <option value="Aéroport">✈️ Aéroport</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="planTrip()" class="btn-gradient">
+                    <span class="btn-icon">🔍</span>
+                    <span>Planifier mon trajet</span>
+                </button>
+            </div>
+
+            <div id="trip-result" class="trip-result" style="display:none;">
+                <!-- Qualité de l'air -->
+                <div class="air-quality-card">
+                    <h3>🌫️ Qualité de l'air</h3>
+                    <div class="aqi-badge" id="aqi-badge">
+                        <span class="aqi-value" id="aqi-value">-</span>
+                        <span class="aqi-label">AQI</span>
+                    </div>
+                    <p id="air-status">-</p>
+                </div>
+
+                <!-- Recommandation -->
+                <div class="recommendation-card">
+                    <h3>💡 Recommandation</h3>
+                    <p id="recommendation-text">-</p>
+                </div>
+
+                <!-- Transports disponibles -->
+                <div class="transports-card">
+                    <h3>🚌 Transports recommandés</h3>
+                    <div id="recommended-transports" class="transport-list"></div>
+                </div>
+            </div>
+
+            <div id="trip-loading" class="loading" style="display:none;">
+                <p>⏳ Analyse en cours...</p>
+            </div>
+        </section>
+
+        <!-- Service Transport -->
+        <section id="transport" class="service-section">
+            <h2>🚌 Service Transport (REST)</h2>
+            <div class="actions">
+                <button onclick="loadTransports()" class="btn-primary">Charger les transports</button>
+                <button onclick="showAddTransportForm()" class="btn-secondary">Ajouter un transport</button>
+            </div>
+            <div id="transport-content" class="content-area"></div>
+            <div id="add-transport-form" class="form-container" style="display:none;">
+                <h3>Nouveau Transport</h3>
+                <input type="text" id="transport-mode" placeholder="Mode (Bus, Métro, Tramway)">
+                <input type="text" id="transport-route" placeholder="Route (ex: Ligne 1)">
+                <select id="transport-status">
+                    <option value="operationnel">Opérationnel</option>
+                    <option value="en_maintenance">En maintenance</option>
+                    <option value="hors_service">Hors service</option>
+                </select>
+                <button onclick="createTransport()" class="btn-primary">Créer</button>
+                <button onclick="hideAddTransportForm()" class="btn-secondary">Annuler</button>
+            </div>
+        </section>
+
+        <!-- Service Tourisme -->
+        <section id="tourism" class="service-section">
+            <h2>🏛️ Service Tourisme (GraphQL)</h2>
+            <div class="actions">
+                <button onclick="loadAttractions()" class="btn-primary">Charger les attractions</button>
+            </div>
+            <div id="tourism-content" class="content-area"></div>
+        </section>
+
+        <!-- Service Qualité de l'Air -->
+        <section id="air-quality" class="service-section">
+            <div class="section-header">
+                <h2>🌫️ Qualité de l'Air (SOAP)</h2>
+                <p class="description">Surveillance de la qualité de l'air en temps réel dans toutes les zones de la ville</p>
+            </div>
+            <div class="actions">
+                <button onclick="loadAirQuality()" class="btn-primary">Actualiser les mesures</button>
+            </div>
+            <div id="air-quality-content" class="content-area"></div>
+        </section>
+
+        <!-- Service Urgences -->
+        <section id="emergency" class="service-section">
+            <div class="section-header">
+                <h2>🚑 Service d'Urgence (gRPC)</h2>
+                <p class="description">Gestion des véhicules d'urgence et interventions en cours</p>
+            </div>
+            <div class="actions">
+                <button onclick="loadEmergencyData()" class="btn-primary">Actualiser les données</button>
+            </div>
+            <div id="emergency-content" class="content-area">
+                <div class="emergency-grid">
+                    <div class="emergency-section">
+                        <h3>🚗 Véhicules d'urgence</h3>
+                        <div id="emergency-vehicles"></div>
+                    </div>
+                    <div class="emergency-section">
+                        <h3>🚨 Interventions actives</h3>
+                        <div id="emergency-interventions"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Smart City Dashboard - Architecture Microservices avec API Gateway</p>
+        <p>REST | SOAP | GraphQL | gRPC</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

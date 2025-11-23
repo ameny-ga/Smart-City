@@ -1,0 +1,117 @@
+services:
+  # Service REST - Transport
+  service-rest:
+    build:
+      context: ./service_rest_transport
+      dockerfile: Dockerfile
+    container_name: smartcity-rest
+    ports:
+      - "8000:8000"
+    networks:
+      - smartcity-network
+    volumes:
+      - rest-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Service SOAP - Air Quality
+  service-soap:
+    build:
+      context: ./service_soap_air
+      dockerfile: Dockerfile
+    container_name: smartcity-soap
+    ports:
+      - "8001:8001"
+    networks:
+      - smartcity-network
+    volumes:
+      - soap-data:/app/data
+    restart: unless-stopped
+
+  # Service GraphQL - Tourisme
+  service-graphql:
+    build:
+      context: ./service_graphql_tourisme
+      dockerfile: Dockerfile
+    container_name: smartcity-graphql
+    ports:
+      - "8002:8002"
+    networks:
+      - smartcity-network
+    volumes:
+      - graphql-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Service gRPC - Urgences
+  service-grpc:
+    build:
+      context: ./service_grpc_urgence
+      dockerfile: Dockerfile
+    container_name: smartcity-grpc
+    ports:
+      - "50051:50051"
+    networks:
+      - smartcity-network
+    volumes:
+      - grpc-data:/app/data
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api_gateway
+      dockerfile: Dockerfile
+    container_name: smartcity-gateway
+    ports:
+      - "8888:8080"
+    networks:
+      - smartcity-network
+    depends_on:
+      - service-rest
+      - service-soap
+      - service-graphql
+      - service-grpc
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Client Web
+  web-client:
+    build:
+      context: ./web_client
+      dockerfile: Dockerfile
+    container_name: smartcity-webclient
+    ports:
+      - "80:80"
+    networks:
+      - smartcity-network
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+
+networks:
+  smartcity-network:
+    driver: bridge
+    name: smartcity-network
+
+volumes:
+  rest-data:
+    name: smartcity-rest-data
+  soap-data:
+    name: smartcity-soap-data
+  graphql-data:
+    name: smartcity-graphql-data
+  grpc-data:
+    name: smartcity-grpc-data

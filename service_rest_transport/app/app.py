@@ -4,12 +4,42 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 # Imports locaux
-from .database import get_db, engine, Base
+from .database import get_db, engine, Base, SessionLocal
 from .models import TransportDB
 from . import crud
 
 # Créer les tables au démarrage
 Base.metadata.create_all(bind=engine)
+
+# Initialiser les données de démonstration si la base est vide
+def init_demo_data():
+    """Initialise la base avec des données de démonstration si elle est vide."""
+    db = SessionLocal()
+    try:
+        if db.query(TransportDB).count() == 0:
+            transports = [
+                TransportDB(mode="Bus", route="Ligne 1", status="operationnel"),
+                TransportDB(mode="Bus", route="Ligne 2", status="operationnel"),
+                TransportDB(mode="Bus", route="Ligne 5", status="en_maintenance"),
+                TransportDB(mode="Métro", route="Ligne A", status="operationnel"),
+                TransportDB(mode="Métro", route="Ligne B", status="operationnel"),
+                TransportDB(mode="Métro", route="Ligne C", status="retard"),
+                TransportDB(mode="Tramway", route="T1", status="operationnel"),
+                TransportDB(mode="Tramway", route="T2", status="operationnel"),
+                TransportDB(mode="Tramway", route="T3", status="hors_service"),
+                TransportDB(mode="Train", route="RER A", status="operationnel"),
+                TransportDB(mode="Train", route="RER B", status="retard"),
+                TransportDB(mode="Vélo", route="Station Centre-Ville", status="operationnel"),
+                TransportDB(mode="Vélo", route="Station Gare", status="operationnel"),
+                TransportDB(mode="Taxi", route="Zone Nord", status="operationnel"),
+            ]
+            db.add_all(transports)
+            db.commit()
+            print(f"✅ {len(transports)} transports initialisés")
+    finally:
+        db.close()
+
+init_demo_data()
 
 # Métadonnées OpenAPI pour une documentation professionnelle
 app = FastAPI(
@@ -54,6 +84,7 @@ def health_check(db: Session = Depends(get_db)):
     return {"status": "ok", "service": "transport", "transports_count": count}
 
 
+@app.get("/transports/", response_model=List[Transport], tags=["Transport"])
 @app.get("/transport", response_model=List[Transport], tags=["Transport"])
 def list_transports(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """Liste tous les transports disponibles avec pagination."""
@@ -61,6 +92,7 @@ def list_transports(skip: int = 0, limit: int = 100, db: Session = Depends(get_d
     return transports
 
 
+@app.get("/transports/{transport_id}", response_model=Transport, tags=["Transport"])
 @app.get("/transport/{transport_id}", response_model=Transport, tags=["Transport"])
 def get_transport(transport_id: int, db: Session = Depends(get_db)):
     """Récupère un transport par son ID."""
@@ -70,6 +102,7 @@ def get_transport(transport_id: int, db: Session = Depends(get_db)):
     return transport
 
 
+@app.post("/transports/", response_model=Transport, status_code=201, tags=["Transport"])
 @app.post("/transport", response_model=Transport, status_code=201, tags=["Transport"])
 def create_transport(transport: TransportCreate, db: Session = Depends(get_db)):
     """Crée un nouveau transport."""
@@ -82,6 +115,7 @@ def create_transport(transport: TransportCreate, db: Session = Depends(get_db)):
     return new_transport
 
 
+@app.put("/transports/{transport_id}", response_model=Transport, tags=["Transport"])
 @app.put("/transport/{transport_id}", response_model=Transport, tags=["Transport"])
 def update_transport(transport_id: int, transport: TransportUpdate, db: Session = Depends(get_db)):
     """Met à jour un transport existant."""
@@ -97,6 +131,7 @@ def update_transport(transport_id: int, transport: TransportUpdate, db: Session 
     return updated_transport
 
 
+@app.delete("/transports/{transport_id}", status_code=204, tags=["Transport"])
 @app.delete("/transport/{transport_id}", status_code=204, tags=["Transport"])
 def delete_transport(transport_id: int, db: Session = Depends(get_db)):
     """Supprime un transport."""

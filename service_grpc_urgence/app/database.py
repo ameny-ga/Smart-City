@@ -3,9 +3,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 import os
 
-# Chemin de la base de données
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'urgence.db')}"
+# Chemin de la base de données (volume Docker persistant)
+DATABASE_URL = "sqlite:///./data/urgence.db"
 
 # Configuration du moteur SQLAlchemy
 engine = create_engine(

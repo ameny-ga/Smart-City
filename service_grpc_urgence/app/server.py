@@ -242,19 +242,33 @@ class EmergencyServiceServicer(emergency_pb2_grpc.EmergencyServiceServicer):
             db.close()
 
 
+def init_demo_data():
+    """Initialise les données de démonstration."""
+    from init_db import init_db
+    try:
+        init_db()
+    except Exception as e:
+        print(f"⚠️ Erreur initialisation DB: {e}")
+
+
 def serve():
     """Lance le serveur gRPC."""
+    # Initialiser les données
+    init_demo_data()
+    
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     emergency_pb2_grpc.add_EmergencyServiceServicer_to_server(
         EmergencyServiceServicer(), server
     )
-    server.add_insecure_port('127.0.0.1:50051')
+    server.add_insecure_port('0.0.0.0:50051')
     server.start()
     
     print("🚑 Service gRPC - Urgences")
     print("=" * 50)
-    print("Serveur: 127.0.0.1:50051")
+    print("Serveur: 0.0.0.0:50051")
     print("Protocol: gRPC")
+    print("Véhicules: 8 (ambulances, pompiers, police)")
+    print("Interventions: 4 en base")
     print("=" * 50)
     
     try:

@@ -3,8 +3,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Chemin de la base de données SQLite
-DATABASE_URL = "sqlite:///./transport.db"
+# Chemin de la base de données SQLite (volume Docker monté sur /app/data)
+DATABASE_URL = "sqlite:///./data/transport.db"
 
 # Création du moteur SQLAlchemy
 engine = create_engine(

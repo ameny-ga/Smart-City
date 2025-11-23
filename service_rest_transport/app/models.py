@@ -1,7 +1,10 @@
 """Modèles SQLAlchemy pour la base de données."""
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.sql import func
-from .database import Base
+try:
+    from .database import Base
+except ImportError:
+    from database import Base
 
 
 class TransportDB(Base):

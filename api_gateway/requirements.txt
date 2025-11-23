@@ -1,0 +1,6 @@
+fastapi==0.104.0
+uvicorn==0.24.0
+httpx==0.25.0
+zeep==4.2.1
+grpcio==1.60.0
+protobuf==4.21.12

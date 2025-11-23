@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Emergency</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            max-height: 500px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status.ok {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test API Emergency - Smart City</h1>
+        <p>Cette page teste l'accès à l'API Gateway depuis le navigateur</p>
+        
+        <div>
+            <button onclick="testHealth()">🔍 Test Health Gateway</button>
+            <button onclick="testVehicles()">🚑 Test Vehicles</button>
+            <button onclick="testInterventions()">🚨 Test Interventions</button>
+            <button onclick="testDashboard()">📊 Test Dashboard</button>
+            <button onclick="clearResults()">🗑️ Clear</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const GATEWAY_URL = 'http://localhost:8888';
+        const resultsDiv = document.getElementById('results');
+
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+
+        function addResult(title, data, isError = false, statusCode = null) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result ' + (isError ? 'error' : 'success');
+            
+            let statusHtml = '';
+            if (statusCode !== null) {
+                const statusClass = statusCode === 200 ? 'ok' : 'error';
+                statusHtml = `<span class="status ${statusClass}">HTTP ${statusCode}</span>`;
+            }
+            
+            resultDiv.innerHTML = `
+                <h3>${title} ${statusHtml}</h3>
+                <p><strong>Timestamp:</strong> ${new Date().toLocaleString('fr-FR')}</p>
+                <pre>${typeof data === 'object' ? JSON.stringify(data, null, 2) : data}</pre>
+            `;
+            resultsDiv.insertBefore(resultDiv, resultsDiv.firstChild);
+        }
+
+        async function testHealth() {
+            try {
+                console.log('Testing health endpoint...');
+                const response = await fetch(`${GATEWAY_URL}/health`);
+                const statusCode = response.status;
+                const data = await response.json();
+                
+                console.log('Health response:', data);
+                addResult('✅ Health Check', data, false, statusCode);
+            } catch (error) {
+                console.error('Health error:', error);
+                addResult('❌ Health Check Failed', error.message, true);
+            }
+        }
+
+        async function testVehicles() {
+            try {
+                console.log('Testing vehicles endpoint...');
+                const response = await fetch(`${GATEWAY_URL}/api/emergency/vehicles`);
+                const statusCode = response.status;
+                const data = await response.json();
+                
+                console.log('Vehicles response:', data);
+                addResult(`✅ Vehicles (${data.count} found)`, data, false, statusCode);
+            } catch (error) {
+                console.error('Vehicles error:', error);
+                addResult('❌ Vehicles Failed', error.message, true);
+            }
+        }
+
+        async function testInterventions() {
+            try {
+                console.log('Testing interventions endpoint...');
+                const response = await fetch(`${GATEWAY_URL}/api/emergency/interventions`);
+                const statusCode = response.status;
+                const data = await response.json();
+                
+                console.log('Interventions response:', data);
+                addResult(`✅ Interventions (${data.count} found)`, data, false, statusCode);
+            } catch (error) {
+                console.error('Interventions error:', error);
+                addResult('❌ Interventions Failed', error.message, true);
+            }
+        }
+
+        async function testDashboard() {
+            try {
+                console.log('Testing dashboard endpoint...');
+                const response = await fetch(`${GATEWAY_URL}/api/orchestration/city-dashboard`);
+                const statusCode = response.status;
+                const data = await response.json();
+                
+                console.log('Dashboard response:', data);
+                addResult('✅ Dashboard Orchestration', data, false, statusCode);
+            } catch (error) {
+                console.error('Dashboard error:', error);
+                addResult('❌ Dashboard Failed', error.message, true);
+            }
+        }
+
+        // Test automatique au chargement
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('Page loaded, running automatic health check...');
+            testHealth();
+        });
+    </script>
+</body>
+</html>
