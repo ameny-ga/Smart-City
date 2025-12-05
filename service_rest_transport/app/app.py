@@ -13,29 +13,38 @@ Base.metadata.create_all(bind=engine)
 
 # Initialiser les données de démonstration si la base est vide
 def init_demo_data():
-    """Initialise la base avec des données de démonstration si elle est vide."""
+    """Initialise la base avec des données de la Grande Tunis si elle est vide."""
     db = SessionLocal()
     try:
         if db.query(TransportDB).count() == 0:
             transports = [
-                TransportDB(mode="Bus", route="Ligne 1", status="operationnel"),
-                TransportDB(mode="Bus", route="Ligne 2", status="operationnel"),
-                TransportDB(mode="Bus", route="Ligne 5", status="en_maintenance"),
-                TransportDB(mode="Métro", route="Ligne A", status="operationnel"),
-                TransportDB(mode="Métro", route="Ligne B", status="operationnel"),
-                TransportDB(mode="Métro", route="Ligne C", status="retard"),
-                TransportDB(mode="Tramway", route="T1", status="operationnel"),
-                TransportDB(mode="Tramway", route="T2", status="operationnel"),
-                TransportDB(mode="Tramway", route="T3", status="hors_service"),
-                TransportDB(mode="Train", route="RER A", status="operationnel"),
-                TransportDB(mode="Train", route="RER B", status="retard"),
-                TransportDB(mode="Vélo", route="Station Centre-Ville", status="operationnel"),
-                TransportDB(mode="Vélo", route="Station Gare", status="operationnel"),
-                TransportDB(mode="Taxi", route="Zone Nord", status="operationnel"),
+                # Métro de Tunis
+                TransportDB(mode="Métro", route="Ligne 1 (Sud → Nord)", status="operationnel"),
+                TransportDB(mode="Métro", route="Ligne 2 (Ariana → Carthage)", status="operationnel"),
+                TransportDB(mode="Métro", route="Ligne 3 (La Marsa → Den Den)", status="en_maintenance"),
+                TransportDB(mode="Métro", route="Ligne 4 (Tunis Marine → El Mourouj)", status="operationnel"),
+                TransportDB(mode="Métro", route="Ligne 5 (Bab Alioua → Ben Arous)", status="operationnel"),
+                TransportDB(mode="Métro", route="Ligne 6 (Barcelone → Cité Olympique)", status="retard"),
+                # TGM
+                TransportDB(mode="Train", route="TGM Tunis → La Marsa", status="operationnel"),
+                TransportDB(mode="Train", route="TGM Tunis → Carthage-Hannibal", status="operationnel"),
+                # Bus urbains
+                TransportDB(mode="Bus", route="Ligne 20 - Tunis Centre → Ariana", status="operationnel"),
+                TransportDB(mode="Bus", route="Ligne 35 - La Goulette → Sidi Bou Saïd", status="operationnel"),
+                TransportDB(mode="Bus", route="Ligne 45 - Bardo → Carthage", status="operationnel"),
+                TransportDB(mode="Bus", route="Ligne 50 - Tunis → La Marsa", status="operationnel"),
+                TransportDB(mode="Bus", route="Ligne 60 - Mégrine → Hammam-Lif", status="retard"),
+                # Louages et taxis
+                TransportDB(mode="Taxi", route="Louage Tunis → Hammamet", status="operationnel"),
+                TransportDB(mode="Taxi", route="Taxi Tunis Centre-Ville", status="operationnel"),
+                # Vélos
+                TransportDB(mode="Vélo", route="Station Avenue Habib Bourguiba", status="operationnel"),
+                TransportDB(mode="Vélo", route="Station Carthage", status="operationnel"),
+                TransportDB(mode="Vélo", route="Station La Marsa Plage", status="hors_service"),
             ]
             db.add_all(transports)
             db.commit()
-            print(f"✅ {len(transports)} transports initialisés")
+            print(f"✅ {len(transports)} transports de la Grande Tunis initialisés")
     finally:
         db.close()
 

@@ -16,123 +16,184 @@ def init_db():
         db.close()
         return
     
-    # Véhicules d'urgence
+    # Véhicules d'urgence - Grande Tunis
     vehicles = [
+        # Ambulances
         VehicleDB(
             vehicle_type="ambulance",
-            identifier="AMB-001",
+            identifier="AMB-TUN-001",
             status="available",
-            latitude=48.8566,
-            longitude=2.3522,
-            station="Hôpital Cochin",
+            latitude=36.8065,
+            longitude=10.1815,
+            station="Hôpital Charles Nicolle",
             crew_size=2
         ),
         VehicleDB(
             vehicle_type="ambulance",
-            identifier="AMB-002",
+            identifier="AMB-TUN-002",
             status="on_mission",
-            latitude=48.8606,
-            longitude=2.3376,
-            station="Hôpital Saint-Louis",
-            crew_size=2
-        ),
-        VehicleDB(
-            vehicle_type="fire_truck",
-            identifier="FIRE-001",
-            status="available",
-            latitude=48.8520,
-            longitude=2.3466,
-            station="Caserne Sévigné",
-            crew_size=6
-        ),
-        VehicleDB(
-            vehicle_type="fire_truck",
-            identifier="FIRE-002",
-            status="maintenance",
-            latitude=48.8738,
-            longitude=2.2950,
-            station="Caserne Champerret",
-            crew_size=6
-        ),
-        VehicleDB(
-            vehicle_type="police_car",
-            identifier="POL-001",
-            status="available",
-            latitude=48.8767,
-            longitude=2.3469,
-            station="Commissariat 18e",
-            crew_size=2
-        ),
-        VehicleDB(
-            vehicle_type="police_car",
-            identifier="POL-002",
-            status="on_mission",
-            latitude=48.8422,
-            longitude=2.3218,
-            station="Commissariat 14e",
+            latitude=36.8485,
+            longitude=10.1950,
+            station="Hôpital La Rabta",
             crew_size=2
         ),
         VehicleDB(
             vehicle_type="ambulance",
-            identifier="AMB-003",
+            identifier="AMB-TUN-003",
             status="available",
-            latitude=48.8462,
-            longitude=2.3372,
-            station="Hôpital Val-de-Grâce",
+            latitude=36.8167,
+            longitude=10.1717,
+            station="Hôpital Habib Thameur",
             crew_size=3
         ),
         VehicleDB(
-            vehicle_type="fire_truck",
-            identifier="FIRE-003",
+            vehicle_type="ambulance",
+            identifier="AMB-ARI-001",
             status="available",
-            latitude=48.8584,
-            longitude=2.2945,
-            station="Caserne Tour Eiffel",
+            latitude=36.8667,
+            longitude=10.1950,
+            station="Hôpital Ariana",
+            crew_size=2
+        ),
+        
+        # Camions de pompiers
+        VehicleDB(
+            vehicle_type="fire_truck",
+            identifier="FIRE-TUN-001",
+            status="available",
+            latitude=36.8100,
+            longitude=10.1800,
+            station="Caserne Centrale Tunis",
+            crew_size=6
+        ),
+        VehicleDB(
+            vehicle_type="fire_truck",
+            identifier="FIRE-TUN-002",
+            status="maintenance",
+            latitude=36.8107,
+            longitude=10.1370,
+            station="Caserne Bardo",
+            crew_size=6
+        ),
+        VehicleDB(
+            vehicle_type="fire_truck",
+            identifier="FIRE-MAR-001",
+            status="available",
+            latitude=36.8767,
+            longitude=10.3250,
+            station="Caserne La Marsa",
             crew_size=5
+        ),
+        VehicleDB(
+            vehicle_type="fire_truck",
+            identifier="FIRE-CAR-001",
+            status="available",
+            latitude=36.8528,
+            longitude=10.3233,
+            station="Caserne Carthage",
+            crew_size=5
+        ),
+        
+        # Voitures de police
+        VehicleDB(
+            vehicle_type="police_car",
+            identifier="POL-TUN-001",
+            status="available",
+            latitude=36.8169,
+            longitude=10.1717,
+            station="Commissariat Médina",
+            crew_size=2
+        ),
+        VehicleDB(
+            vehicle_type="police_car",
+            identifier="POL-TUN-002",
+            status="on_mission",
+            latitude=36.8008,
+            longitude=10.1815,
+            station="Commissariat Centre-Ville",
+            crew_size=2
+        ),
+        VehicleDB(
+            vehicle_type="police_car",
+            identifier="POL-ARI-001",
+            status="available",
+            latitude=36.8667,
+            longitude=10.1950,
+            station="Commissariat Ariana",
+            crew_size=2
+        ),
+        VehicleDB(
+            vehicle_type="police_car",
+            identifier="POL-SBS-001",
+            status="available",
+            latitude=36.8687,
+            longitude=10.3413,
+            station="Commissariat Sidi Bou Saïd",
+            crew_size=2
         ),
     ]
     
-    # Interventions
+    # Interventions - Grande Tunis
     interventions = [
         InterventionDB(
             intervention_type="medical",
             priority="high",
-            address="15 Rue de Rivoli, 75001 Paris",
-            latitude=48.8606,
-            longitude=2.3376,
+            address="Avenue Habib Bourguiba, Tunis",
+            latitude=36.8008,
+            longitude=10.1815,
             status="in_progress",
             assigned_vehicle_id=2,
-            description="Malaise cardiaque, patient conscient"
+            description="Malaise cardiaque, patient conscient, 65 ans"
         ),
         InterventionDB(
             intervention_type="fire",
             priority="critical",
-            address="230 Boulevard Voltaire, 75011 Paris",
-            latitude=48.8520,
-            longitude=2.3800,
+            address="Rue de la Kasbah, Médina de Tunis",
+            latitude=36.8169,
+            longitude=10.1717,
             status="pending",
             assigned_vehicle_id=None,
-            description="Incendie dans un appartement au 3ème étage"
+            description="Incendie dans commerce de la Médina, propagation rapide"
         ),
         InterventionDB(
             intervention_type="accident",
             priority="medium",
-            address="Avenue des Champs-Élysées, 75008 Paris",
-            latitude=48.8698,
-            longitude=2.3078,
+            address="Route de La Marsa, près Carthage",
+            latitude=36.8600,
+            longitude=10.3100,
             status="in_progress",
-            assigned_vehicle_id=6,
-            description="Accident de la route, 2 véhicules impliqués"
+            assigned_vehicle_id=10,
+            description="Collision entre 2 véhicules, blessés légers"
         ),
         InterventionDB(
             intervention_type="crime",
             priority="high",
-            address="12 Rue de la Paix, 75002 Paris",
-            latitude=48.8692,
-            longitude=2.3314,
+            address="Avenue Mohamed V, Centre-Ville Tunis",
+            latitude=36.8020,
+            longitude=10.1820,
             status="pending",
             assigned_vehicle_id=None,
-            description="Cambriolage en cours dans une bijouterie"
+            description="Tentative de vol à main armée dans agence bancaire"
+        ),
+        InterventionDB(
+            intervention_type="medical",
+            priority="critical",
+            address="Sidi Bou Saïd Village",
+            latitude=36.8687,
+            longitude=10.3413,
+            status="pending",
+            assigned_vehicle_id=None,
+            description="Touriste en arrêt cardiaque, réanimation en cours"
+        ),
+        InterventionDB(
+            intervention_type="accident",
+            priority="low",
+            address="Port de La Goulette",
+            latitude=36.8183,
+            longitude=10.3050,
+            status="completed",
+            assigned_vehicle_id=11,
+            description="Accident de travail mineur, intervention terminée"
         ),
     ]
     
