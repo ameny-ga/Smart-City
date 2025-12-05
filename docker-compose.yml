@@ -75,6 +75,10 @@ services:
       - "8888:8080"
     networks:
       - smartcity-network
+    environment:
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+    env_file:
+      - ./api_gateway/.env
     depends_on:
       - service-rest
       - service-soap

@@ -51,6 +51,15 @@ TuniLink est un système d'information urbain qui orchestre plusieurs services p
 git clone https://github.com/ameny-ga/Smart-City.git
 cd Smart-City
 
+# Configurer la clé API OpenWeatherMap
+cd api_gateway
+cp .env.example .env
+# Éditer .env et remplacer your_api_key_here par votre vraie clé
+# Obtenir une clé gratuite sur : https://openweathermap.org/api
+
+# Retourner au dossier racine
+cd ..
+
 # Démarrer tous les services
 docker-compose up -d --build
 

@@ -8,6 +8,10 @@ from zeep import Client
 from zeep.exceptions import Fault
 from grpc_client import EmergencyClient
 from auth import verify_credentials, require_admin
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement
+load_dotenv()
 
 app = FastAPI(
     title="🌐 API Gateway - TuniLink",
@@ -35,7 +39,8 @@ SERVICES = {
 # Configuration API externe pour données météo/qualité d'air en temps réel
 # OpenWeatherMap Air Pollution API (gratuite - 1000 appels/jour)
 # Inscription: https://openweathermap.org/api/air-pollution
-OPENWEATHER_API_KEY = "020982147a5e4e33a506f84176bf48b9"
+import os
+OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "YOUR_API_KEY_HERE")
 OPENWEATHER_AIR_API = "http://api.openweathermap.org/data/2.5/air_pollution"
 
 # Coordonnées GPS des zones de Tunis
