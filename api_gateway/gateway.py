@@ -1,5 +1,5 @@
 """API Gateway - Centralise l'accès aux 4 microservices."""
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 from typing import Dict, Any
@@ -7,10 +7,11 @@ import asyncio
 from zeep import Client
 from zeep.exceptions import Fault
 from grpc_client import EmergencyClient
+from auth import verify_credentials, require_admin
 
 app = FastAPI(
-    title="🌐 API Gateway - Smart City",
-    description="Point d'entrée centralisé pour tous les microservices",
+    title="🌐 API Gateway - TuniLink",
+    description="L'expérience urbaine réinventée - Point d'entrée centralisé pour tous les microservices de la Grande Tunis",
     version="1.0.0"
 )
 
@@ -31,12 +32,159 @@ SERVICES = {
     "emergency": "service-grpc:50051"  # gRPC
 }
 
+# Configuration API externe pour données météo/qualité d'air en temps réel
+# OpenWeatherMap Air Pollution API (gratuite - 1000 appels/jour)
+# Inscription: https://openweathermap.org/api/air-pollution
+OPENWEATHER_API_KEY = "020982147a5e4e33a506f84176bf48b9"
+OPENWEATHER_AIR_API = "http://api.openweathermap.org/data/2.5/air_pollution"
+
+# Coordonnées GPS des zones de Tunis
+TUNIS_ZONES_GPS = {
+    "Tunis Centre-Ville": {"lat": 36.8065, "lon": 10.1815},
+    "La Marsa": {"lat": 36.8764, "lon": 10.3253},
+    "Carthage": {"lat": 36.8530, "lon": 10.3233},
+    "Sidi Bou Saïd": {"lat": 36.8687, "lon": 10.3413},
+    "Ariana": {"lat": 36.8625, "lon": 10.1956},
+    "Bardo": {"lat": 36.8107, "lon": 10.1370},
+    "La Goulette": {"lat": 36.8186, "lon": 10.3053},
+    "Aéroport Tunis-Carthage": {"lat": 36.8510, "lon": 10.2272},
+    "Ben Arous": {"lat": 36.7542, "lon": 10.2189},
+    "Hammam-Lif": {"lat": 36.7292, "lon": 10.3439}
+}
+
+
+async def get_real_time_air_quality(zone: str) -> Dict[str, Any]:
+    """
+    Récupère les données de qualité d'air en temps réel via OpenWeatherMap API.
+    
+    Retourne:
+    - aqi: Air Quality Index (1-5 selon OpenWeather, converti en 0-500 US EPA)
+    - status: Description textuelle
+    - components: PM2.5, PM10, O3, NO2, CO, etc.
+    - source: "OpenWeatherMap API" ou "SOAP fallback"
+    """
+    # Récupérer les coordonnées GPS de la zone
+    coords = TUNIS_ZONES_GPS.get(zone, TUNIS_ZONES_GPS["Tunis Centre-Ville"])
+    
+    # Si pas de clé API configurée, utiliser le service SOAP local
+    if not OPENWEATHER_API_KEY or OPENWEATHER_API_KEY == "votre_cle_api_ici":
+        print(f"⚠️ Pas de clé OpenWeather configurée, utilisation du service SOAP local")
+        return await get_soap_air_quality(zone)
+    
+    try:
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(
+                OPENWEATHER_AIR_API,
+                params={
+                    "lat": coords["lat"],
+                    "lon": coords["lon"],
+                    "appid": OPENWEATHER_API_KEY
+                }
+            )
+            
+            if response.status_code != 200:
+                print(f"⚠️ Erreur API OpenWeather (code {response.status_code}), fallback SOAP")
+                return await get_soap_air_quality(zone)
+            
+            data = response.json()
+            
+            # Extraire les données de pollution
+            aqi_index = data["list"][0]["main"]["aqi"]  # 1-5 selon OpenWeather
+            components = data["list"][0]["components"]
+            
+            # Convertir l'index OpenWeather (1-5) en AQI US EPA (0-500)
+            # 1=Good, 2=Fair, 3=Moderate, 4=Poor, 5=Very Poor
+            aqi_conversion = {1: 25, 2: 60, 3: 90, 4: 130, 5: 200}
+            aqi_value = aqi_conversion.get(aqi_index, 75)
+            
+            # Calculer un AQI plus précis basé sur PM2.5 (norme US EPA)
+            pm25 = components.get("pm2_5", 0)
+            if pm25 <= 12.0:
+                aqi_from_pm25 = (50 / 12.0) * pm25
+            elif pm25 <= 35.4:
+                aqi_from_pm25 = 50 + ((100 - 50) / (35.4 - 12.1)) * (pm25 - 12.1)
+            elif pm25 <= 55.4:
+                aqi_from_pm25 = 100 + ((150 - 100) / (55.4 - 35.5)) * (pm25 - 35.5)
+            elif pm25 <= 150.4:
+                aqi_from_pm25 = 150 + ((200 - 150) / (150.4 - 55.5)) * (pm25 - 55.5)
+            else:
+                aqi_from_pm25 = 200 + ((300 - 200) / (250.4 - 150.5)) * min(pm25 - 150.5, 100)
+            
+            # Utiliser la valeur la plus élevée entre l'index OpenWeather et le calcul PM2.5
+            final_aqi = int(max(aqi_value, aqi_from_pm25))
+            
+            # Déterminer le statut
+            if final_aqi <= 50:
+                status = "Bon"
+            elif final_aqi <= 100:
+                status = "Modéré"
+            elif final_aqi <= 150:
+                status = "Mauvais pour groupes sensibles"
+            elif final_aqi <= 200:
+                status = "Mauvais"
+            else:
+                status = "Très mauvais"
+            
+            return {
+                "aqi": final_aqi,
+                "status": status,
+                "components": {
+                    "pm2_5": components.get("pm2_5", 0),
+                    "pm10": components.get("pm10", 0),
+                    "o3": components.get("o3", 0),
+                    "no2": components.get("no2", 0),
+                    "co": components.get("co", 0)
+                },
+                "source": "OpenWeatherMap API (temps réel)",
+                "coordinates": coords
+            }
+            
+    except Exception as e:
+        print(f"⚠️ Erreur lors de l'appel OpenWeather API: {e}")
+        return await get_soap_air_quality(zone)
+
+
+async def get_soap_air_quality(zone: str) -> Dict[str, Any]:
+    """
+    Fallback: utilise le service SOAP local si l'API externe échoue.
+    """
+    try:
+        wsdl_url = f"{SERVICES['air_quality']}/?wsdl"
+        soap_client = Client(wsdl_url)
+        measures = soap_client.service.GetMeasuresByStation(zone)
+        
+        if measures and len(measures) > 0:
+            measure = measures[0]
+            return {
+                "aqi": measure.aqi,
+                "status": measure.status,
+                "components": {
+                    "pm2_5": float(measure.pm25) if measure.pm25 else 0,
+                    "pm10": float(measure.pm10) if measure.pm10 else 0,
+                    "o3": float(measure.o3) if measure.o3 else 0,
+                    "no2": float(measure.no2) if measure.no2 else 0,
+                    "co": float(measure.co) if measure.co else 0
+                },
+                "source": "Service SOAP local"
+            }
+    except Exception as e:
+        print(f"⚠️ Erreur SOAP: {e}")
+    
+    # Dernière option: données par défaut
+    return {
+        "aqi": 75,
+        "status": "Données non disponibles",
+        "components": {"pm2_5": 0, "pm10": 0, "o3": 0, "no2": 0, "co": 0},
+        "source": "Données par défaut"
+    }
+
 
 @app.get("/")
 def root():
     """Page d'accueil de la Gateway."""
     return {
-        "service": "API Gateway - Smart City",
+        "service": "API Gateway - TuniLink",
+        "slogan": "L'expérience urbaine réinventée",
         "version": "1.0.0",
         "architecture": "microservices",
         "services": {
@@ -89,6 +237,22 @@ async def health_check():
     }
 
 
+@app.get("/api/auth/me")
+async def get_current_user(user: dict = Depends(verify_credentials)):
+    """Retourne les informations de l'utilisateur connecté."""
+    return {
+        "username": user["username"],
+        "role": user["role"],
+        "full_name": user["full_name"],
+        "permissions": {
+            "can_create_transport": user["role"] == "admin",
+            "can_update_transport": user["role"] == "admin",
+            "can_delete_transport": user["role"] == "admin",
+            "can_view_transport": True
+        }
+    }
+
+
 # ============================================
 # ROUTES POUR LE SERVICE TRANSPORT (REST)
 # ============================================
@@ -118,8 +282,8 @@ async def get_transport(transport_id: int):
 
 
 @app.post("/api/transport/transports")
-async def create_transport(data: Dict[str, Any]):
-    """Crée un nouveau transport."""
+async def create_transport(data: Dict[str, Any], admin: dict = Depends(require_admin)):
+    """Crée un nouveau transport. [ADMIN ONLY]"""
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
@@ -132,8 +296,8 @@ async def create_transport(data: Dict[str, Any]):
 
 
 @app.put("/api/transport/transports/{transport_id}")
-async def update_transport(transport_id: int, data: Dict[str, Any]):
-    """Met à jour un transport."""
+async def update_transport(transport_id: int, data: Dict[str, Any], admin: dict = Depends(require_admin)):
+    """Met à jour un transport. [ADMIN ONLY]"""
     async with httpx.AsyncClient() as client:
         try:
             response = await client.put(
@@ -148,8 +312,8 @@ async def update_transport(transport_id: int, data: Dict[str, Any]):
 
 
 @app.delete("/api/transport/transports/{transport_id}")
-async def delete_transport(transport_id: int):
-    """Supprime un transport."""
+async def delete_transport(transport_id: int, admin: dict = Depends(require_admin)):
+    """Supprime un transport. [ADMIN ONLY]"""
     async with httpx.AsyncClient() as client:
         try:
             response = await client.delete(f"{SERVICES['transport']}/transports/{transport_id}")
@@ -219,14 +383,57 @@ async def get_attractions():
 
 @app.get("/api/air-quality/measures")
 async def get_air_quality_measures():
-    """Liste toutes les mesures de qualité de l'air."""
-    # Note: Pour SOAP, il faudrait utiliser zeep ou requests avec XML
-    # Pour simplifier, on retourne un message indiquant d'utiliser SOAP directement
-    return {
-        "message": "Service SOAP - Utilisez un client SOAP ou SoapUI",
-        "wsdl": f"{SERVICES['air_quality']}/?wsdl",
-        "operations": ["GetAllMeasures", "GetAirQuality", "GetMeasuresByStation", "AddMeasure", "UpdateMeasureStatus"]
-    }
+    """
+    Liste toutes les mesures de qualité de l'air EN TEMPS RÉEL pour les 10 zones de Tunis.
+    Utilise l'API OpenWeatherMap pour chaque zone avec fallback SOAP.
+    """
+    measures = []
+    
+    # Récupérer les données en temps réel pour chaque zone
+    for zone_name, coords in TUNIS_ZONES_GPS.items():
+        try:
+            # Utiliser l'API temps réel pour chaque zone
+            air_data = await get_real_time_air_quality(zone_name)
+            
+            measures.append({
+                "id": len(measures) + 1,
+                "station": zone_name,
+                "location": f"GPS: {coords['lat']}, {coords['lon']}",
+                "pm25": air_data["components"].get("pm2_5", 0),
+                "pm10": air_data["components"].get("pm10", 0),
+                "o3": air_data["components"].get("o3", 0),
+                "no2": air_data["components"].get("no2", 0),
+                "co": air_data["components"].get("co", 0),
+                "aqi": air_data["aqi"],
+                "quality": air_data["status"],
+                "source": air_data.get("source", "Unknown")
+            })
+        except Exception as e:
+            print(f"⚠️ Erreur pour zone {zone_name}: {e}")
+            # En cas d'erreur, utiliser le fallback SOAP
+            try:
+                wsdl_url = f"{SERVICES['air_quality']}/?wsdl"
+                soap_client = Client(wsdl_url)
+                response = soap_client.service.GetMeasuresByStation(zone_name)
+                if response and len(response) > 0:
+                    measure = response[0]
+                    measures.append({
+                        "id": len(measures) + 1,
+                        "station": measure.station_name,
+                        "location": measure.location,
+                        "pm25": float(measure.pm25),
+                        "pm10": float(measure.pm10),
+                        "o3": float(measure.o3) if measure.o3 else None,
+                        "no2": float(measure.no2) if measure.no2 else None,
+                        "co": float(measure.co) if measure.co else None,
+                        "aqi": measure.aqi,
+                        "quality": measure.status,
+                        "source": "Service SOAP local (fallback)"
+                    })
+            except Exception as soap_error:
+                print(f"⚠️ Erreur SOAP fallback pour {zone_name}: {soap_error}")
+    
+    return measures
 
 
 # ============================================
@@ -311,14 +518,16 @@ async def get_emergency_info():
 # ============================================
 
 @app.get("/api/orchestration/plan-trip")
-async def plan_trip(zone: str = "Centre-Ville"):
+async def plan_trip(zone: str = "Tunis Centre-Ville"):
     """
     Orchestre plusieurs services pour planifier un trajet intelligent :
-    1. Vérifie la qualité de l'air (SOAP - simulé pour commencer)
+    1. Vérifie la qualité de l'air pour la zone (SOAP)
     2. Génère une recommandation basée sur l'AQI
-    3. Récupère les transports disponibles (REST)
+    3. Récupère les transports disponibles pour cette zone (REST)
+    4. Priorise les transports selon la qualité de l'air
     
-    Approche SIMPLE : AQI simulé initialement pour valider le workflow.
+    Zones supportées: Tunis Centre-Ville, La Marsa, Carthage, Sidi Bou Saïd, 
+                     Ariana, Bardo, La Goulette, Aéroport Tunis-Carthage
     """
     result = {
         "zone": zone,
@@ -327,29 +536,10 @@ async def plan_trip(zone: str = "Centre-Ville"):
         "transports": []
     }
     
-    # Étape 1 : Qualité de l'air (APPEL SOAP RÉEL)
-    try:
-        # Créer le client SOAP
-        wsdl_url = f"{SERVICES['air_quality']}/?wsdl"
-        soap_client = Client(wsdl_url)
-        
-        # Appeler GetMeasuresByStation
-        measures = soap_client.service.GetMeasuresByStation(zone)
-        
-        if measures and len(measures) > 0:
-            # Prendre la première mesure (la plus récente)
-            measure = measures[0]
-            aqi_value = measure.aqi
-            air_status = measure.status
-        else:
-            # Fallback si aucune mesure trouvée pour cette zone
-            aqi_value = 75
-            air_status = "Données non disponibles"
-    except Exception as e:
-        # Fallback en cas d'erreur SOAP
-        print(f"⚠️ Erreur SOAP: {e}")
-        aqi_value = 75
-        air_status = "Service temporairement indisponible"
+    # Étape 1 : Qualité de l'air EN TEMPS RÉEL (OpenWeatherMap API ou SOAP fallback)
+    air_data = await get_real_time_air_quality(zone)
+    aqi_value = air_data["aqi"]
+    air_status = air_data["status"]
     
     # Interprétation de l'AQI pour la couleur
     if aqi_value <= 50:
@@ -365,7 +555,9 @@ async def plan_trip(zone: str = "Centre-Ville"):
         "aqi": aqi_value,
         "status": air_status,
         "color": color,
-        "source": "SOAP service"
+        "source": air_data.get("source", "SOAP service"),
+        "components": air_data.get("components", {}),
+        "real_time": "OpenWeatherMap" in air_data.get("source", "")
     }
     
     # Étape 2 : Génération de la recommandation
@@ -400,15 +592,45 @@ async def plan_trip(zone: str = "Centre-Ville"):
                 if t.get("status") == "operationnel"
             ]
             
+            # Filtrer strictement par zone géographique
+            # Extraire les mots-clés significatifs de la zone (enlever les mots génériques)
+            generic_words = ['tunis', 'centre', 'ville']
+            zone_words = zone.lower().split()
+            zone_keywords = [w for w in zone_words if w not in generic_words]
+            
+            # Si tous les mots sont génériques, garder au moins "centre-ville" complet
+            if not zone_keywords and 'centre' in zone_words:
+                zone_keywords = ['centre-ville', 'centre']
+            elif not zone_keywords:
+                zone_keywords = zone_words
+            
+            zone_transports = []
+            
+            for t in available_transports:
+                route_lower = t.get("route", "").lower()
+                
+                # Vérifier si au moins un mot-clé significatif de la zone est dans la route
+                if any(keyword in route_lower for keyword in zone_keywords):
+                    zone_transports.append(t)
+            
+            # Utiliser uniquement les transports de la zone (pas de fallback)
+            filtered_transports = zone_transports
+            
             # Prioriser selon la qualité de l'air
             if aqi_value > 100:
                 # Mauvaise qualité : privilégier métro, bus, train (transports fermés)
                 priority_modes = ["Métro", "Bus", "Train", "Taxi"]
-                prioritized = [t for t in available_transports if t.get("mode") in priority_modes]
-                result["transports"] = prioritized[:5]  # Top 5
+                prioritized = [t for t in filtered_transports if t.get("mode") in priority_modes]
+                result["transports"] = prioritized[:5] if prioritized else filtered_transports[:5]
             else:
-                # Bonne qualité : tous les transports sont OK
-                result["transports"] = available_transports[:8]  # Top 8
+                # Bonne qualité : tous les transports sont OK, avec préférence pour vélo si AQI < 50
+                if aqi_value < 50:
+                    # Excellent air : promouvoir vélo et marche
+                    eco_modes = ["Vélo", "Bus", "Métro", "Train"]
+                    prioritized = [t for t in filtered_transports if t.get("mode") in eco_modes]
+                    result["transports"] = prioritized[:8] if prioritized else filtered_transports[:8]
+                else:
+                    result["transports"] = filtered_transports[:8]
                 
         except Exception as e:
             result["transports_error"] = f"Service transport indisponible: {str(e)}"
@@ -421,6 +643,50 @@ async def plan_trip(zone: str = "Centre-Ville"):
     }
     
     return result
+
+
+@app.get("/api/air-quality/real-time")
+async def get_real_time_air(zone: str = "Tunis Centre-Ville"):
+    """
+    🌍 Endpoint dédié pour récupérer les données de qualité d'air EN TEMPS RÉEL
+    
+    Source principale: OpenWeatherMap Air Pollution API
+    Fallback: Service SOAP local
+    
+    Params:
+        zone: Zone géographique (Tunis Centre-Ville, La Marsa, Carthage, etc.)
+    
+    Returns:
+        - aqi: Air Quality Index (0-500)
+        - status: Qualité textuelle (Bon, Modéré, Mauvais, etc.)
+        - components: PM2.5, PM10, O3, NO2, CO
+        - source: Source des données (API externe ou SOAP local)
+        - real_time: True si données en temps réel
+    """
+    air_data = await get_real_time_air_quality(zone)
+    
+    # Déterminer la couleur
+    aqi = air_data["aqi"]
+    if aqi <= 50:
+        color = "green"
+    elif aqi <= 100:
+        color = "yellow"
+    elif aqi <= 150:
+        color = "orange"
+    else:
+        color = "red"
+    
+    return {
+        "zone": zone,
+        "aqi": aqi,
+        "status": air_data["status"],
+        "color": color,
+        "components": air_data.get("components", {}),
+        "source": air_data.get("source", "Unknown"),
+        "real_time": "OpenWeatherMap" in air_data.get("source", ""),
+        "coordinates": air_data.get("coordinates", TUNIS_ZONES_GPS.get(zone, {})),
+        "timestamp": "now"
+    }
 
 
 @app.get("/api/orchestration/tourist-day")
@@ -743,8 +1009,10 @@ async def get_city_dashboard():
     
     Cas d'usage: Vue d'ensemble temps réel de l'état de la Smart City
     """
+    from datetime import datetime
+    
     dashboard = {
-        "timestamp": "2025-11-23T14:00:00Z",
+        "timestamp": datetime.now().isoformat(),
         "transport": {},
         "air_quality": {},
         "tourism": {},
@@ -769,26 +1037,41 @@ async def get_city_dashboard():
         except:
             dashboard["transport"] = {"status": "❌ Service indisponible"}
         
-        # Service 2: Qualité de l'air (SOAP)
+        # Service 2: Qualité de l'air (TEMPS RÉEL - OpenWeatherMap)
         try:
-            wsdl_url = f"{SERVICES['air_quality']}/?wsdl"
-            soap_client = Client(wsdl_url)
-            all_measures = soap_client.service.GetAllMeasures()
+            # Récupérer les données en temps réel pour toutes les zones
+            all_aqi_values = []
+            zones_monitored = 0
+            bad_zones = 0
             
-            if all_measures and len(all_measures) > 0:
-                avg_aqi = sum(m.aqi for m in all_measures) / len(all_measures)
-                bad_zones = len([m for m in all_measures if m.aqi > 100])
+            for zone_name in TUNIS_ZONES_GPS.keys():
+                try:
+                    air_data = await get_real_time_air_quality(zone_name)
+                    aqi = air_data["aqi"]
+                    all_aqi_values.append(aqi)
+                    zones_monitored += 1
+                    if aqi > 100:
+                        bad_zones += 1
+                except:
+                    continue
+            
+            if all_aqi_values:
+                avg_aqi = sum(all_aqi_values) / len(all_aqi_values)
                 
                 dashboard["air_quality"] = {
                     "average_aqi": int(avg_aqi),
                     "status": "✅ Bon" if avg_aqi < 50 else "⚠️ Modéré" if avg_aqi < 100 else "🔴 Mauvais",
-                    "zones_monitored": len(all_measures),
-                    "polluted_zones": bad_zones
+                    "zones_monitored": zones_monitored,
+                    "polluted_zones": bad_zones,
+                    "source": "OpenWeatherMap API (temps réel)"
                 }
                 
                 if bad_zones > 0:
                     dashboard["alerts"].append(f"⚠️ {bad_zones} zone(s) avec pollution élevée")
-        except:
+            else:
+                dashboard["air_quality"] = {"status": "❌ Données non disponibles"}
+        except Exception as e:
+            print(f"⚠️ Erreur récupération qualité air dashboard: {e}")
             dashboard["air_quality"] = {"status": "❌ Service indisponible"}
         
         # Service 3: Tourisme (GraphQL)
@@ -840,19 +1123,22 @@ async def get_city_dashboard():
             }
     
     # Analyse globale de la ville
-    services_ok = sum([
-        1 if "✅" in str(dashboard["transport"].get("status", "")) else 0,
-        1 if "✅" in str(dashboard["air_quality"].get("status", "")) else 0,
-        1 if "✅" in str(dashboard["tourism"].get("status", "")) else 0,
-        1 if "✅" in str(dashboard["emergency"].get("status", "")) else 0
-    ])
+    # Vérifier si les services sont opérationnels (pas d'erreur et données présentes)
+    transport_ok = "❌" not in str(dashboard["transport"].get("status", "")) and dashboard["transport"].get("operational", 0) > 0
+    air_ok = "❌" not in str(dashboard["air_quality"].get("status", "")) and dashboard["air_quality"].get("average_aqi") is not None
+    tourism_ok = "❌" not in str(dashboard["tourism"].get("status", "")) and dashboard["tourism"].get("total_attractions", 0) > 0
+    emergency_ok = "❌" not in str(dashboard["emergency"].get("status", "")) and "error" not in dashboard["emergency"]
+    
+    services_ok = sum([transport_ok, air_ok, tourism_ok, emergency_ok])
     
     if services_ok == 4:
         dashboard["city_status"] = "🌟 Tous systèmes opérationnels"
     elif services_ok >= 3:
-        dashboard["city_status"] = "✅ Ville opérationnelle avec perturbations mineures"
+        dashboard["city_status"] = "✅ Ville opérationnelle"
+    elif services_ok >= 2:
+        dashboard["city_status"] = "⚠️ Perturbations détectées"
     else:
-        dashboard["city_status"] = "⚠️ Perturbations importantes détectées"
+        dashboard["city_status"] = "🔴 Perturbations importantes"
         dashboard["alerts"].append("🚨 Plusieurs services nécessitent attention")
     
     dashboard["orchestration"] = {

@@ -321,8 +321,8 @@ init_db()
 
 # Application FastAPI
 app = FastAPI(
-    title="🏛️ Service GraphQL - Tourisme",
-    description="API GraphQL pour gérer les attractions touristiques de la Smart City",
+    title="🏛️ Service GraphQL - Tourisme TuniLink",
+    description="API GraphQL pour gérer les attractions touristiques de la Grande Tunis - L'expérience urbaine réinventée",
     version="1.0.0"
 )
 

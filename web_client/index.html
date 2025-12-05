@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart City - Dashboard</title>
+    <title>TuniLink - L'expérience urbaine réinventée</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,15 +15,15 @@
     <div id="page-loader" class="page-loader">
         <div class="loader-content">
             <div class="spinner"></div>
-            <p>Chargement de Smart City...</p>
+            <p>Chargement de TuniLink...</p>
         </div>
     </div>
 
     <header>
         <div class="header-content">
             <div class="header-left">
-                <h1>🏙️ Smart City</h1>
-                <p>Plateforme de gestion intelligente de la ville</p>
+                <h1>🔗 TuniLink</h1>
+                <p>L'expérience urbaine réinventée</p>
             </div>
             <div class="header-right">
                 <div class="connection-status" id="connection-status">
@@ -31,9 +31,34 @@
                     <span class="status-text">Connexion...</span>
                 </div>
                 <div class="current-time" id="current-time"></div>
+                <button id="login-btn" onclick="showLoginModal()" class="btn-login">🔐 Connexion</button>
+                <div id="user-info" class="user-info" style="display:none;">
+                    <span id="user-name"></span>
+                    <span id="user-role" class="user-role"></span>
+                    <button onclick="logout()" class="btn-logout">Déconnexion</button>
+                </div>
             </div>
         </div>
     </header>
+
+    <!-- Modal de connexion -->
+    <div id="login-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>🔐 Connexion</h2>
+            <p>Connectez-vous pour accéder aux fonctionnalités d'administration</p>
+            <input type="text" id="login-username" placeholder="Nom d'utilisateur" autocomplete="username">
+            <input type="password" id="login-password" placeholder="Mot de passe" autocomplete="current-password" onkeypress="if(event.key==='Enter') login()">
+            <div class="modal-actions">
+                <button onclick="login()" class="btn-primary">Se connecter</button>
+                <button onclick="hideLoginModal()" class="btn-secondary">Annuler</button>
+            </div>
+            <div class="login-help">
+                <p><strong>Comptes de test :</strong></p>
+                <p>👨‍💼 Admin: <code>admin</code> / <code>admin123</code></p>
+                <p>👤 Utilisateur: <code>user</code> / <code>user123</code></p>
+            </div>
+        </div>
+    </div>
 
     <nav>
         <div class="nav-container">
@@ -45,6 +70,12 @@
                 <span class="nav-icon">🗺️</span>
                 <span class="nav-label">Planificateur</span>
             </button>
+            <a href="orchestration.html" style="text-decoration: none;">
+                <button class="nav-btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <span class="nav-icon">🎭</span>
+                    <span class="nav-label">Orchestration</span>
+                </button>
+            </a>
             <button class="nav-btn" data-service="transport">
                 <span class="nav-icon">🚌</span>
                 <span class="nav-label">Transport</span>
@@ -139,11 +170,14 @@
                     <div class="select-wrapper">
                         <select id="zone-select">
                             <option value="">Sélectionnez une zone...</option>
-                            <option value="Centre-Ville">🏛️ Centre-Ville</option>
-                            <option value="Zone Nord">🏢 Zone Nord</option>
-                            <option value="Zone Sud">🌳 Zone Sud</option>
-                            <option value="Gare">🚉 Gare</option>
-                            <option value="Aéroport">✈️ Aéroport</option>
+                            <option value="Tunis Centre-Ville">🏛️ Tunis Centre-Ville</option>
+                            <option value="La Marsa">🏖️ La Marsa</option>
+                            <option value="Carthage">🏺 Carthage</option>
+                            <option value="Sidi Bou Saïd">🎨 Sidi Bou Saïd</option>
+                            <option value="Ariana">🏢 Ariana</option>
+                            <option value="Bardo">🖼️ Bardo</option>
+                            <option value="La Goulette">⚓ La Goulette</option>
+                            <option value="Aéroport Tunis-Carthage">✈️ Aéroport Tunis-Carthage</option>
                         </select>
                     </div>
                 </div>
@@ -202,6 +236,19 @@
                 <button onclick="createTransport()" class="btn-primary">Créer</button>
                 <button onclick="hideAddTransportForm()" class="btn-secondary">Annuler</button>
             </div>
+            <div id="edit-transport-form" class="form-container" style="display:none;">
+                <h3>Modifier Transport</h3>
+                <input type="hidden" id="edit-transport-id">
+                <input type="text" id="edit-transport-mode" placeholder="Mode (Bus, Métro, Tramway)">
+                <input type="text" id="edit-transport-route" placeholder="Route (ex: Ligne 1)">
+                <select id="edit-transport-status">
+                    <option value="operationnel">Opérationnel</option>
+                    <option value="en_maintenance">En maintenance</option>
+                    <option value="hors_service">Hors service</option>
+                </select>
+                <button onclick="updateTransport()" class="btn-primary">Sauvegarder</button>
+                <button onclick="hideEditTransportForm()" class="btn-secondary">Annuler</button>
+            </div>
         </section>
 
         <!-- Service Tourisme -->
@@ -254,6 +301,7 @@
         <p>REST | SOAP | GraphQL | gRPC</p>
     </footer>
 
+    <script src="auth.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

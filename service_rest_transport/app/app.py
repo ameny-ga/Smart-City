@@ -52,8 +52,8 @@ init_demo_data()
 
 # Métadonnées OpenAPI pour une documentation professionnelle
 app = FastAPI(
-    title="Service REST Transport - Smart City",
-    description="API REST pour la gestion des transports urbains (mobilité)",
+    title="Service REST Transport - TuniLink",
+    description="API REST pour la gestion des transports urbains de la Grande Tunis - L'expérience urbaine réinventée",
     version="1.0.0",
     docs_url="/docs",  # Swagger UI auto-généré
     redoc_url="/redoc"  # ReDoc alternatif

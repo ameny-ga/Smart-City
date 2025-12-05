@@ -174,15 +174,18 @@ async function loadTransports() {
         
         transports.forEach(t => {
             const statusClass = t.status === 'operationnel' ? 'status-ok' : 'status-warning';
+            const adminButtons = isAdmin() ? `
+                <button onclick="showEditTransportForm(${t.id}, '${t.mode}', '${t.route}', '${t.status}')" class="btn-edit">Modifier</button>
+                <button onclick="deleteTransport(${t.id})" class="btn-delete">Supprimer</button>
+            ` : '<span class="text-muted">Actions réservées aux admins</span>';
+            
             html += `<tr>
                 <td>${t.id}</td>
                 <td>${t.mode}</td>
                 <td>${t.route}</td>
                 <td><span class="${statusClass}">${t.status}</span></td>
                 <td>${new Date(t.created_at).toLocaleDateString('fr-FR')}</td>
-                <td>
-                    <button onclick="deleteTransport(${t.id})" class="btn-delete">Supprimer</button>
-                </td>
+                <td>${adminButtons}</td>
             </tr>`;
         });
         
@@ -194,6 +197,11 @@ async function loadTransports() {
 }
 
 function showAddTransportForm() {
+    if (!isAdmin()) {
+        alert('❌ Fonctionnalité réservée aux administrateurs. Connectez-vous avec un compte admin.');
+        showLoginModal();
+        return;
+    }
     document.getElementById('add-transport-form').style.display = 'block';
 }
 
@@ -212,7 +220,7 @@ async function createTransport() {
     }
     
     try {
-        const response = await fetch(`${GATEWAY_URL}/api/transport/transports`, {
+        const response = await authenticatedFetch(`${GATEWAY_URL}/api/transport/transports`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ mode, route, status })
@@ -237,7 +245,7 @@ async function deleteTransport(id) {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce transport ?')) return;
     
     try {
-        const response = await fetch(`${GATEWAY_URL}/api/transport/transports/${id}`, {
+        const response = await authenticatedFetch(`${GATEWAY_URL}/api/transport/transports/${id}`, {
             method: 'DELETE'
         });
         
@@ -246,6 +254,49 @@ async function deleteTransport(id) {
             loadTransports();
         } else {
             alert('❌ Erreur lors de la suppression');
+        }
+    } catch (error) {
+        alert(`❌ Erreur: ${error.message}`);
+    }
+}
+
+function showEditTransportForm(id, mode, route, status) {
+    const form = document.getElementById('edit-transport-form');
+    document.getElementById('edit-transport-id').value = id;
+    document.getElementById('edit-transport-mode').value = mode;
+    document.getElementById('edit-transport-route').value = route;
+    document.getElementById('edit-transport-status').value = status;
+    form.style.display = 'block';
+}
+
+function hideEditTransportForm() {
+    document.getElementById('edit-transport-form').style.display = 'none';
+}
+
+async function updateTransport() {
+    const id = document.getElementById('edit-transport-id').value;
+    const mode = document.getElementById('edit-transport-mode').value;
+    const route = document.getElementById('edit-transport-route').value;
+    const status = document.getElementById('edit-transport-status').value;
+    
+    if (!mode || !route) {
+        alert('Veuillez remplir tous les champs');
+        return;
+    }
+    
+    try {
+        const response = await authenticatedFetch(`${GATEWAY_URL}/api/transport/transports/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mode, route, status })
+        });
+        
+        if (response.ok) {
+            alert('✅ Transport modifié avec succès');
+            hideEditTransportForm();
+            loadTransports();
+        } else {
+            alert('❌ Erreur lors de la modification');
         }
     } catch (error) {
         alert(`❌ Erreur: ${error.message}`);

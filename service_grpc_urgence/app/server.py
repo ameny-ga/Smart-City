@@ -263,12 +263,13 @@ def serve():
     server.add_insecure_port('0.0.0.0:50051')
     server.start()
     
-    print("🚑 Service gRPC - Urgences")
+    print("🚑 TuniLink - Service gRPC Urgences")
     print("=" * 50)
+    print("🔗 L'expérience urbaine réinventée")
     print("Serveur: 0.0.0.0:50051")
     print("Protocol: gRPC")
-    print("Véhicules: 8 (ambulances, pompiers, police)")
-    print("Interventions: 4 en base")
+    print("Véhicules: 12 (ambulances, pompiers, police)")
+    print("Interventions: 6 en base - Grande Tunis")
     print("=" * 50)
     
     try:
