@@ -10,7 +10,7 @@ services:
     networks:
       - smartcity-network
     volumes:
-      - rest-data:/app/data
+      - ./service_rest_transport/transport.db:/app/data/transport.db
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -29,7 +29,7 @@ services:
     networks:
       - smartcity-network
     volumes:
-      - soap-data:/app/data
+      - ./service_soap_air/air_quality.db:/app/data/air_quality.db
     restart: unless-stopped
 
   # Service GraphQL - Tourisme
@@ -43,7 +43,7 @@ services:
     networks:
       - smartcity-network
     volumes:
-      - graphql-data:/app/data
+      - ./service_graphql_tourisme/tourisme.db:/app/tourisme.db
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
       interval: 30s
@@ -62,10 +62,10 @@ services:
     networks:
       - smartcity-network
     volumes:
-      - grpc-data:/app/data
+      - ./service_grpc_urgence/urgence.db:/app/data/urgence.db
     restart: unless-stopped
 
-  # API Gateway
+  # API Gateway (Point d'entrée)
   api-gateway:
     build:
       context: ./api_gateway
@@ -110,12 +110,5 @@ networks:
     driver: bridge
     name: smartcity-network
 
-volumes:
-  rest-data:
-    name: smartcity-rest-data
-  soap-data:
-    name: smartcity-soap-data
-  graphql-data:
-    name: smartcity-graphql-data
-  grpc-data:
-    name: smartcity-grpc-data
+# Volumes supprimés - Les bases de données sont maintenant des fichiers locaux
+# montés directement depuis les dossiers de services

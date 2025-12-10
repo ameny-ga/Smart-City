@@ -9,8 +9,8 @@ from database import Base, engine, SessionLocal
 from models import VehicleDB, InterventionDB
 
 
-# Créer les tables si elles n'existent pas
-Base.metadata.create_all(bind=engine)
+# Créer les tables si elles n'existent pas (commenté pour préserver les données)
+# Base.metadata.create_all(bind=engine)
 
 
 class EmergencyServiceServicer(emergency_pb2_grpc.EmergencyServiceServicer):
@@ -254,7 +254,7 @@ def init_demo_data():
 def serve():
     """Lance le serveur gRPC."""
     # Initialiser les données
-    init_demo_data()
+    # init_demo_data()  # Désactivé pour utiliser les données existantes
     
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     emergency_pb2_grpc.add_EmergencyServiceServicer_to_server(

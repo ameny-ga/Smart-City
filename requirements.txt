@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-spyne
-lxml
-strawberry-graphql
-grpcio
-grpcio-tools
-requests
-pydantic

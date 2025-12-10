@@ -1,41 +1,52 @@
 # 🏙️ TuniLink - Smart City Platform
 
-Plateforme de gestion intelligente pour la ville de Tunis intégrant 4 architectures de services : REST, SOAP, GraphQL et gRPC.
+**Plateforme intelligente de gestion urbaine pour Tunis** - Intégration multi-protocoles (REST, SOAP, GraphQL, gRPC)
 
 ## 📋 Vue d'ensemble
 
-TuniLink est un système d'information urbain qui orchestre plusieurs services pour gérer :
-- 🚍 **Transports publics** (REST)
-- 🌫️ **Qualité de l'air** (SOAP)
-- 🏛️ **Attractions touristiques** (GraphQL)
-- 🚑 **Services d'urgence** (gRPC)
+TuniLink orchestre 4 microservices pour gérer :
+- 🚍 **Transports publics** (REST API)
+- 🌫️ **Qualité de l'air** (SOAP Service)
+- 🏛️ **Attractions touristiques** (GraphQL API)
+- 🚑 **Services d'urgence** (gRPC Service)
 
-## 🏗️ Architecture
+## 🏗️ Architecture en couches
 
 ```
-┌─────────────────────────────────────────────────────┐
-│              WEB CLIENT (Nginx)                     │
-│                 Port: 80                            │
-└────────────────────┬────────────────────────────────┘
-                     │ HTTP
-                     ▼
-┌─────────────────────────────────────────────────────┐
-│           API GATEWAY (FastAPI)                     │
-│              Port: 8888                             │
-│  ┌────────────────────────────────────────────┐    │
-│  │  • Authentification (admin/user)           │    │
-│  │  • Orchestration de 5 scénarios            │    │
-│  │  • Agrégation des services                 │    │
-│  └────────────────────────────────────────────┘    │
-└──┬──────────┬──────────┬──────────┬───────────────┘
-   │          │          │          │
-   │ REST     │ SOAP     │ GraphQL  │ gRPC
-   ▼          ▼          ▼          ▼
-┌────────┐ ┌────────┐ ┌──────────┐ ┌───────────┐
-│Transport│ │Air     │ │Tourisme  │ │Urgence    │
-│8000    │ │8001    │ │8002      │ │50051      │
-└────────┘ └────────┘ └──────────┘ └───────────┘
+┌───────────────────────────────────────────────────────────┐
+│              4. FRONTEND (Nginx - Port 80)                │
+│                    Interface utilisateur                   │
+└─────────────────────────┬─────────────────────────────────┘
+                          │ HTTP
+                          ▼
+┌───────────────────────────────────────────────────────────┐
+│          3. API GATEWAY (FastAPI - Port 8888)             │
+│   • Authentification HTTP Basic Auth                      │
+│   • Point d'entrée unique (Single Entry Point)            │
+│   • Routage et orchestration intégrée                     │
+│   • 5 scénarios complexes (workflows)                     │
+└──┬────────────┬────────────┬────────────┬─────────────────┘
+   │            │            │            │
+   │ REST       │ SOAP       │ GraphQL    │ gRPC
+   ▼            ▼            ▼            ▼
+┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
+│Transport │ │Air Quality│ │Tourism   │ │Emergency │
+│Port 8000 │ │Port 8001  │ │Port 8002 │ │Port 50051│
+└────┬─────┘ └────┬──────┘ └────┬─────┘ └────┬─────┘
+     │            │             │            │
+     ▼            ▼             ▼            ▼
+┌───────────────────────────────────────────────────────────┐
+│            1. BASES DE DONNÉES (SQLite)                   │
+│  transport.db | air_quality.db | tourisme.db | urgence.db │
+└───────────────────────────────────────────────────────────┘
 ```
+
+### Avantages de cette architecture
+
+✅ **Séparation des responsabilités** - Chaque couche a un rôle défini  
+✅ **Scalabilité** - Services indépendants, peuvent être dupliqués  
+✅ **Maintenabilité** - Code modulaire et testable  
+✅ **Sécurité** - Gateway centralise l'authentification
 
 ## 🚀 Démarrage Rapide
 
@@ -101,72 +112,39 @@ Le système utilise HTTP Basic Authentication avec 2 rôles :
 4. Les administrateurs voient les boutons "Modifier" et "Supprimer"
 5. Les utilisateurs simples ne peuvent que consulter
 
-## 🎭 Scénarios d'Orchestration
+## 🎭 5 Scénarios d'orchestration
 
-Testez les 5 scénarios via http://localhost/orchestration.html
+Interface web : http://localhost/orchestration.html
 
 ### 1. 🏙️ City Dashboard
-Agrège en temps réel :
-- Tous les transports disponibles
-- Qualité de l'air (OpenWeatherMap API)
-- Attractions touristiques
-- Véhicules d'urgence
-
-**Test** :
-```bash
-curl http://localhost:8888/api/orchestration/city-dashboard
+**Tableau de bord ville complet** - Agrège tous les services en temps réel
+```powershell
+$headers = @{Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("admin:admin123"))}
+Invoke-RestMethod -Uri "http://localhost:8888/api/orchestration/city-dashboard" -Headers $headers
 ```
 
 ### 2. 🗺️ Plan Trip
-Planifie un trajet optimal selon :
-- Zone de départ et d'arrivée
-- Transports disponibles filtrés géographiquement
-- Qualité de l'air sur le trajet
-
-**Test** :
-```bash
-curl "http://localhost:8888/api/orchestration/plan-trip?origin=Carthage&destination=Bardo"
+**Planification trajet intelligent** - Basé sur qualité d'air + transports disponibles
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8888/api/orchestration/plan-trip?zone=Tunis%20Centre-Ville" -Headers $headers
 ```
 
-### 3. 🚑 Emergency Response
-Coordonne une intervention d'urgence :
-- Dispatch du véhicule le plus proche
-- Impact sur le trafic
-- Qualité de l'air à l'emplacement
-
-**Test** :
-```bash
-curl -X POST http://localhost:8888/api/orchestration/emergency-response \
-  -H "Content-Type: application/json" \
-  -d '{
-    "emergency_type": "accident",
-    "severity": "high",
-    "location": "Avenue Bourguiba",
-    "latitude": 36.8065,
-    "longitude": 10.1815
-  }'
+### 3. 🏛️ Tourist Day
+**Journée touristique** - Attractions + transport + météo
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8888/api/orchestration/tourist-day?zone=Tunis" -Headers $headers
 ```
 
-### 4. 🏛️ Tourist Day
-Recommande des attractions selon :
-- Zone souhaitée
-- Qualité de l'air actuelle
-- Transports disponibles
-
-**Test** :
-```bash
-curl "http://localhost:8888/api/orchestration/tourist-day?zone=La%20Marsa"
+### 4. 🚑 Emergency Response
+**Gestion urgence coordonnée** - Véhicules + trafic + qualité air
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8888/api/orchestration/emergency-response?zone=Tunis%20Centre-Ville&emergency_type=accident" -Headers $headers
 ```
 
 ### 5. 🌱 Eco Route
-Calcule un itinéraire écologique :
-- Évite les zones polluées
-- Privilégie les transports verts
-- Recommandations environnementales
-
-**Test** :
-```bash
-curl "http://localhost:8888/api/orchestration/eco-route?origin=Tunis&destination=Carthage"
+**Trajet écologique optimisé** - Évite zones polluées
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8888/api/orchestration/eco-route?start_zone=Tunis%20Centre-Ville&end_zone=La%20Marsa" -Headers $headers
 ```
 
 ## 🔧 Services Individuels
@@ -324,141 +302,131 @@ curl -u admin:admin123 http://localhost:8888/api/auth/me
 ### APIs Externes
 - **OpenWeatherMap Air Pollution API** - Données de qualité d'air en temps réel
 
-## 📂 Structure du Projet
+## 📂 Structure du projet
 
 ```
 Smart-City/
-├── api_gateway/                # Orchestrateur principal
-│   ├── gateway.py             # API Gateway FastAPI
-│   ├── auth.py                # Système d'authentification
-│   ├── grpc_client.py         # Client gRPC
-│   ├── proto/                 # Fichiers Protobuf
+├── api_gateway/                    # Point d'entrée (Port 8888)
+│   ├── gateway.py                 # Gateway avec orchestration intégrée
+│   ├── auth.py                    # Authentification HTTP Basic
+│   ├── grpc_client.py             # Client gRPC
+│   ├── proto/                     # Fichiers Protobuf générés
 │   └── Dockerfile
-├── service_rest_transport/     # Service REST
-│   ├── app/
-│   │   ├── app.py             # FastAPI application
-│   │   └── data/              # Base de données JSON
+│
+├── service_rest_transport/         # Microservice Transport (Port 8000)
+│   ├── app/app.py                 # API REST FastAPI
+│   ├── transport.db               # Base SQLite
 │   └── Dockerfile
-├── service_soap_air/           # Service SOAP
-│   ├── app/
-│   │   ├── soap_server.py     # Serveur Spyne
-│   │   └── data/              # Données qualité air
+│
+├── service_soap_air/               # Microservice Qualité Air (Port 8001)
+│   ├── app/soap_server.py         # Service SOAP Spyne
+│   ├── air_quality.db             # Base SQLite
 │   └── Dockerfile
-├── service_graphql_tourisme/   # Service GraphQL
-│   ├── app/
-│   │   ├── app.py             # Serveur Strawberry
-│   │   ├── schema.py          # Schéma GraphQL
-│   │   └── data/              # Données attractions
+│
+├── service_graphql_tourisme/       # Microservice Tourisme (Port 8002)
+│   ├── app/app.py                 # API GraphQL Strawberry
+│   ├── tourisme.db                # Base SQLite
 │   └── Dockerfile
-├── service_grpc_urgence/       # Service gRPC
-│   ├── app/
-│   │   ├── server.py          # Serveur gRPC
-│   │   ├── emergency.proto    # Définition Protobuf
-│   │   └── data/              # Données urgences
+│
+├── service_grpc_urgence/           # Microservice Urgence (Port 50051)
+│   ├── app/server.py              # Serveur gRPC
+│   ├── urgence.db                 # Base SQLite
 │   └── Dockerfile
-├── web_client/                 # Interface utilisateur
-│   ├── index.html             # Page principale
-│   ├── orchestration.html     # Tests orchestration
-│   ├── app.js                 # Logique métier
-│   ├── auth.js                # Gestion authentification
-│   ├── style.css              # Styles
+│
+├── web_client/                     # Frontend (Port 80)
+│   ├── index.html                 # Page principale
+│   ├── orchestration.html         # Tests scénarios
+│   ├── app.js                     # Logique frontend
 │   └── Dockerfile
-├── docker-compose.yml          # Configuration Docker
-├── test_services.ps1           # Script de tests
-└── README.md
+│
+├── export_database/                # Backups bases de données
+│   ├── transport.db
+│   ├── air_quality.db
+│   ├── tourisme.db
+│   └── urgence.db
+│
+├── docker-compose.yml              # Orchestration Docker
+└── README.md                       # Documentation
 ```
 
-## 🔧 Commandes Utiles
+## 🔧 Commandes Docker
 
-### Docker
-
-```bash
+```powershell
 # Démarrer tous les services
-docker-compose up -d
+docker-compose up -d --build
 
-# Voir les logs
+# Vérifier l'état
+docker-compose ps
+
+# Voir les logs en temps réel
 docker-compose logs -f
+
+# Logs d'un service spécifique
+docker-compose logs -f api-gateway
 
 # Arrêter tous les services
 docker-compose down
 
-# Reconstruire un service
-docker-compose up -d --build service-rest
+# Arrêter ET supprimer les volumes (⚠️ supprime les données)
+docker-compose down -v
 
-# Voir l'état des services
-docker ps
+# Rebuild un service spécifique
+docker-compose up -d --build api-gateway
 
 # Entrer dans un conteneur
 docker exec -it smartcity-gateway /bin/bash
 ```
 
-### Git
-
-```bash
-# Vérifier le statut
-git status
-
-# Ajouter les modifications
-git add .
-
-# Commit
-git commit -m "Description"
-
-# Push vers GitHub
-git push origin main
-```
-
 ## 🐛 Dépannage
 
-### Les services ne démarrent pas
-```bash
+### Services ne démarrent pas
+```powershell
 # Vérifier les logs
 docker-compose logs
 
 # Nettoyer et redémarrer
-docker-compose down -v
+docker-compose down
 docker-compose up -d --build
 ```
 
 ### Port déjà utilisé
-```bash
-# Trouver le processus utilisant le port 8000
-netstat -ano | findstr :8000
+```powershell
+# Windows - Trouver le processus sur port 8888
+netstat -ano | findstr :8888
 
-# Arrêter le processus (Windows)
+# Arrêter le processus
 taskkill /PID <PID> /F
 ```
 
-### Données corrompues
-```bash
-# Supprimer les volumes et redémarrer
-docker-compose down -v
+### Bases de données corrompues
+```powershell
+# Copier les backups propres
+Copy-Item "export_database\*.db" "service_*\" -Force -Recurse
+
+# Redémarrer sans volumes
+docker-compose down
 docker-compose up -d --build
 ```
 
-## 📊 Métriques du Projet
+## 📊 Statistiques du projet
 
-- **6 services** Docker
-- **4 architectures** différentes (REST, SOAP, GraphQL, gRPC)
-- **5 scénarios** d'orchestration
+- **6 services** Docker (4 microservices + gateway + frontend)
+- **4 protocoles** (REST, SOAP, GraphQL, gRPC)
+- **5 scénarios** d'orchestration complexes
 - **10 zones** de Tunis couvertes
-- **19 transports** disponibles
-- **20 attractions** touristiques
-- **8 véhicules** d'urgence
-- **2 rôles** utilisateurs
-
-## 📝 Licence
-
-Projet académique - Université de Tunis
+- **19 transports** opérationnels
+- **17 attractions** touristiques
+- **12 véhicules** d'urgence
+- **Architecture 4 couches** (DB → Microservices → API Gateway → Frontend)
 
 ## 👥 Auteur
 
-- **GitHub** : [@ameny-ga](https://github.com/ameny-ga)
-- **Repository** : [Smart-City](https://github.com/ameny-ga/Smart-City)
+**Ameni Abdelli**
+- GitHub: [@ameny-ga](https://github.com/ameny-ga)
 
-## 🎯 Objectifs Pédagogiques
+## 📝 Licence
 
-Ce projet démontre :
+Projet académique - Décembre 2025
 1. ✅ Maîtrise de **4 architectures de services** (REST, SOAP, GraphQL, gRPC)
 2. ✅ **Orchestration** de microservices hétérogènes
 3. ✅ **Authentification et autorisation** (RBAC)

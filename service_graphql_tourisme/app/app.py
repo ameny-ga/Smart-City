@@ -7,8 +7,8 @@ from .models import AttractionDB
 from .database import SessionLocal
 import uvicorn
 
-# Créer les tables
-Base.metadata.create_all(bind=engine)
+# Créer les tables (commenté pour ne pas écraser les données existantes)
+# Base.metadata.create_all(bind=engine)
 
 # Initialiser la base de données avec des données
 def init_db():
@@ -317,7 +317,7 @@ def init_db():
 
 
 # Initialiser la DB
-init_db()
+# init_db()  # Désactivé pour utiliser les données existantes
 
 # Application FastAPI
 app = FastAPI(

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎭 Orchestration - TuniLink Smart City</title>
+    <title>🎁 Nos Offres - TuniLink Smart City</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 50%, #06b6d4 100%);
             padding: 20px;
             min-height: 100vh;
         }
@@ -25,22 +25,31 @@
         
         header {
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
             text-align: center;
             margin-bottom: 30px;
         }
         
         h1 {
-            color: #667eea;
-            font-size: 2.5em;
+            background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.8em;
             margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        h1::before {
+            content: "🎁 ";
         }
         
         .subtitle {
-            color: #666;
-            font-size: 1.1em;
+            color: #555;
+            font-size: 1.2em;
+            font-weight: 500;
         }
         
         .scenarios-grid {
@@ -52,15 +61,17 @@
         
         .scenario-card {
             background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid transparent;
         }
         
         .scenario-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(245, 87, 108, 0.25);
+            border-color: rgba(245, 87, 108, 0.3);
         }
         
         .scenario-header {
@@ -75,32 +86,43 @@
         }
         
         .scenario-title {
-            font-size: 1.3em;
-            color: #333;
-            font-weight: bold;
+            font-size: 1.4em;
+            color: #2d2d2d;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
         
         .scenario-description {
-            color: #666;
-            margin-bottom: 15px;
-            line-height: 1.6;
+            color: #5a5a5a;
+            margin-bottom: 20px;
+            line-height: 1.7;
+            font-size: 0.98em;
         }
         
         .scenario-btn {
             width: 100%;
-            padding: 12px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 16px;
+            background: linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: bold;
+            border-radius: 12px;
+            font-size: 1.05em;
+            font-weight: 700;
             cursor: pointer;
-            transition: opacity 0.3s ease;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+            text-transform: none;
+            letter-spacing: 0.3px;
         }
         
         .scenario-btn:hover {
-            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+            background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);
+        }
+        
+        .scenario-btn:active {
+            transform: translateY(0px);
         }
         
         .scenario-btn:disabled {
@@ -173,16 +195,17 @@
         .loading {
             text-align: center;
             padding: 20px;
-            color: #667eea;
-            font-size: 1.2em;
+            color: #7c3aed;
+            font-size: 1.3em;
+            font-weight: 600;
         }
         
         .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #7c3aed;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             animation: spin 1s linear infinite;
             margin: 20px auto;
         }
@@ -195,17 +218,19 @@
         .back-link {
             display: inline-block;
             margin-top: 20px;
-            padding: 10px 20px;
+            padding: 12px 25px;
             background: white;
-            color: #667eea;
+            color: #7c3aed;
             text-decoration: none;
-            border-radius: 8px;
-            font-weight: bold;
-            transition: transform 0.3s ease;
+            border-radius: 10px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
         
         .back-link:hover {
-            transform: scale(1.05);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
         }
         
         .alert-box {
@@ -233,35 +258,35 @@
 <body>
     <div class="container">
         <header>
-            <h1>🎭 Scénarios d'Orchestration</h1>
-            <p class="subtitle">Démonstration des capacités d'intégration multi-services</p>
+            <h1>Nos Offres Intelligentes</h1>
+            <p class="subtitle">Découvrez nos 5 solutions innovantes pour votre ville</p>
         </header>
 
         <div class="scenarios-grid">
-            <!-- Scénario 1: City Dashboard -->
+            <!-- Offre 1: Tableau de Bord Intelligent -->
             <div class="scenario-card">
                 <div class="scenario-header">
-                    <span class="scenario-icon">🏙️</span>
-                    <span class="scenario-title">City Dashboard</span>
+                    <span class="scenario-icon">📊</span>
+                    <span class="scenario-title">Tableau de Bord Intelligent</span>
                 </div>
                 <p class="scenario-description">
-                    Vue d'ensemble temps réel de tous les services de la ville. Combine Transport + Air + Tourisme + Urgences.
+                    Visualisez l'état de votre ville en temps réel : transports, qualité de l'air, attractions touristiques et services d'urgence, le tout sur une seule interface.
                 </p>
                 <button class="scenario-btn" onclick="runScenario('city-dashboard')">
-                    Afficher le Tableau de Bord
+                    🚀 Découvrir le Dashboard
                 </button>
             </div>
 
-            <!-- Scénario 2: Plan Trip -->
+            <!-- Offre 2: Assistant de Déplacement -->
             <div class="scenario-card">
                 <div class="scenario-header">
-                    <span class="scenario-icon">🗺️</span>
-                    <span class="scenario-title">Plan Trip</span>
+                    <span class="scenario-icon">🚇</span>
+                    <span class="scenario-title">Assistant de Déplacement</span>
                 </div>
                 <p class="scenario-description">
-                    Planification intelligente de trajet selon la qualité de l'air. Combine SOAP + REST avec filtrage géographique.
+                    Planifiez vos trajets intelligemment en fonction de la qualité de l'air et des transports disponibles. Respirez mieux, voyagez mieux.
                 </p>
-                <select id="tripZone" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd;">
+                <select id="tripZone" style="width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 2px solid #e0e0e0; font-size: 1em;">
                     <option value="Tunis Centre-Ville">🏛️ Tunis Centre-Ville</option>
                     <option value="La Marsa">🏖️ La Marsa</option>
                     <option value="Carthage">🏛️ Carthage</option>
@@ -269,71 +294,80 @@
                     <option value="Bardo">🎨 Bardo</option>
                 </select>
                 <button class="scenario-btn" onclick="runScenario('plan-trip')">
-                    Planifier mon Trajet
+                    🗺️ Planifier mon Trajet
                 </button>
             </div>
 
-            <!-- Scénario 3: Emergency Response -->
+            <!-- Offre 3: Gestion des Urgences -->
             <div class="scenario-card">
                 <div class="scenario-header">
                     <span class="scenario-icon">🚨</span>
-                    <span class="scenario-title">Emergency Response</span>
+                    <span class="scenario-title">Gestion des Urgences</span>
                 </div>
                 <p class="scenario-description">
-                    Coordination d'urgence avec dispatch gRPC, gestion du trafic REST et analyse SOAP de l'air.
+                    Coordination instantanée des services d'urgence : dispatch automatique des véhicules, analyse de la situation et optimisation des interventions.
                 </p>
-                <select id="emergencyZone" style="width: 100%; padding: 8px; margin-bottom: 5px; border-radius: 5px; border: 1px solid #ddd;">
-                    <option value="Carthage">Carthage</option>
-                    <option value="La Marsa">La Marsa</option>
-                    <option value="Tunis Centre-Ville">Tunis Centre-Ville</option>
+                <select id="emergencyZone" style="width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 8px; border: 2px solid #e0e0e0; font-size: 1em;">
+                    <option value="Carthage">📍 Carthage</option>
+                    <option value="La Marsa">📍 La Marsa</option>
+                    <option value="Tunis Centre-Ville">📍 Tunis Centre-Ville</option>
                 </select>
-                <select id="emergencyType" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd;">
+                <select id="emergencyType" style="width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 2px solid #e0e0e0; font-size: 1em;">
                     <option value="medical">🚑 Urgence Médicale</option>
                     <option value="fire">🚒 Incendie</option>
                     <option value="crime">🚓 Crime/Sécurité</option>
                 </select>
                 <button class="scenario-btn" onclick="runScenario('emergency-response')">
-                    Déclencher Intervention
+                    🚨 Déclencher l'Intervention
                 </button>
             </div>
 
-            <!-- Scénario 4: Tourist Day -->
+            <!-- Offre 4: Guide Touristique Intelligent -->
             <div class="scenario-card">
                 <div class="scenario-header">
-                    <span class="scenario-icon">🎒</span>
-                    <span class="scenario-title">Tourist Day</span>
+                    <span class="scenario-icon">🎭</span>
+                    <span class="scenario-title">Guide Touristique Intelligent</span>
                 </div>
                 <p class="scenario-description">
-                    Planification journée touristique selon météo. GraphQL attractions + SOAP air + REST transports.
+                    Créez votre itinéraire touristique parfait ! Découvrez les attractions, consultez la qualité de l'air et trouvez les meilleurs moyens de transport.
                 </p>
                 <button class="scenario-btn" onclick="runScenario('tourist-day')">
-                    Planifier ma Journée
+                    ✨ Créer mon Itinéraire
                 </button>
             </div>
 
-            <!-- Scénario 5: Eco Route -->
+            <!-- Offre 5: Trajet Écologique -->
             <div class="scenario-card">
                 <div class="scenario-header">
-                    <span class="scenario-icon">🌱</span>
-                    <span class="scenario-title">Eco Route</span>
+                    <span class="scenario-icon">🌿</span>
+                    <span class="scenario-title">Trajet Écologique</span>
                 </div>
                 <p class="scenario-description">
-                    Trajet écologique optimisé évitant les zones polluées. Analyse multi-zones SOAP.
+                    Voyagez responsable ! Calculez votre itinéraire en évitant les zones polluées et réduisez votre exposition aux particules fines.
                 </p>
-                <select id="startZone" style="width: 100%; padding: 8px; margin-bottom: 5px; border-radius: 5px; border: 1px solid #ddd;">
-                    <option value="Ariana">Ariana</option>
-                    <option value="Bardo">Bardo</option>
-                    <option value="Tunis Centre-Ville">Tunis Centre-Ville</option>
+                <select id="startZone" style="width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 8px; border: 2px solid #e0e0e0; font-size: 1em;">
+                    <option value="Ariana">🚩 Ariana</option>
+                    <option value="Bardo">🚩 Bardo</option>
+                    <option value="Tunis Centre-Ville">🚩 Tunis Centre-Ville</option>
                 </select>
-                <select id="endZone" style="width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd;">
-                    <option value="La Marsa">La Marsa</option>
-                    <option value="Carthage">Carthage</option>
-                    <option value="La Goulette">La Goulette</option>
+                <select id="endZone" style="width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: 2px solid #e0e0e0; font-size: 1em;">
+                    <option value="La Marsa">🏁 La Marsa</option>
+                    <option value="Carthage">🏁 Carthage</option>
+                    <option value="La Goulette">🏁 La Goulette</option>
                 </select>
                 <button class="scenario-btn" onclick="runScenario('eco-route')">
-                    Calculer Trajet Éco
+                    🌿 Calculer mon Trajet Éco
                 </button>
             </div>
+        </div>
+
+        <!-- Bannière informative -->
+        <div style="background: white; border-radius: 20px; padding: 25px; margin-bottom: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.12); text-align: center;">
+            <h3 style="color: #2d2d2d; margin-bottom: 12px; font-size: 1.4em;">💡 Comment ça marche ?</h3>
+            <p style="color: #5a5a5a; line-height: 1.6; margin: 0;">
+                Choisissez une offre ci-dessus et découvrez comment nos services intelligents peuvent améliorer votre quotidien. 
+                Toutes les données sont synchronisées en temps réel pour vous offrir les informations les plus précises.
+            </p>
         </div>
 
         <!-- Panneau de résultats -->

@@ -8,8 +8,8 @@ from .database import get_db, engine, Base, SessionLocal
 from .models import TransportDB
 from . import crud
 
-# Créer les tables au démarrage
-Base.metadata.create_all(bind=engine)
+# Créer les tables au démarrage (commenté pour préserver les données)
+# Base.metadata.create_all(bind=engine)
 
 # Initialiser les données de démonstration si la base est vide
 def init_demo_data():
@@ -48,7 +48,7 @@ def init_demo_data():
     finally:
         db.close()
 
-init_demo_data()
+# init_demo_data()  # Désactivé pour utiliser les données existantes
 
 # Métadonnées OpenAPI pour une documentation professionnelle
 app = FastAPI(

@@ -35,8 +35,8 @@ class AirQualityDB(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
-# Créer tables
-Base.metadata.create_all(bind=engine)
+# Créer tables (commenté pour préserver les données)
+# Base.metadata.create_all(bind=engine)
 
 
 # Modèle SOAP
@@ -207,8 +207,8 @@ if __name__ == '__main__':
     print("=" * 50)
     
     # Initialiser les données
-    print("🌫️ Initialisation des données...")
-    init_demo_data()
+    # print("🌫️ Initialisation des données...")
+    # init_demo_data()  # Désactivé pour utiliser les données existantes
     
     server = make_server('0.0.0.0', 8001, wsgi_app)
     print("✅ Serveur démarré")

@@ -22,8 +22,8 @@ WORKDIR /app
 
 # Copier le code de l'application
 COPY gateway.py .
-COPY grpc_client.py .
 COPY auth.py .
+COPY grpc_client.py .
 
 # Exposer le port de la Gateway
 EXPOSE 8080
